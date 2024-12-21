@@ -1,0 +1,7 @@
+securesystemslib
+tuf
+cryptography
+pymongo
+flask
+flask_cors
+gunicorn
