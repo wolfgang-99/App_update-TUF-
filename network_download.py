@@ -1,5 +1,6 @@
 from tuf.ngclient.fetcher import FetcherInterface
 from tuf.api.exceptions import DownloadError, DownloadHTTPError
+
 from typing import Iterator
 import requests
 
