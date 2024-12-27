@@ -6,7 +6,11 @@ import traceback
 from hashlib import sha256
 from pathlib import Path
 from urllib import request
-from network_download import progress_hook, CustomFetcher
+
+# private
+from network_download import CustomFetcher
+from progress_hook import ProgressWindow
+from new_update import launch_update_dialog
 
 from tuf.api.exceptions import DownloadError, RepositoryError
 from tuf.ngclient import Updater
@@ -46,12 +50,12 @@ def download(base_url: str, target: str) -> bool:
     """
     Download the target file using ``ngclient`` Updater.
 
-    The Updater refreshes the top-level metadata, get the target information,
-    verifies if the target is already cached, and in case it is not cached,
+    The Updater refreshes the top-level metadata, gets the target information,
+    verifies if the target is already cached, and if not cached,
     downloads the target file.
 
     Returns:
-        A boolean indicating if process was successful
+        A boolean indicating if the process was successful.
     """
     metadata_dir = build_metadata_dir(base_url)
 
@@ -65,36 +69,64 @@ def download(base_url: str, target: str) -> bool:
 
     print(f"Using trusted root in {metadata_dir}")
 
+    # Ensure download directory exists
     if not os.path.isdir(DOWNLOAD_DIR):
         os.mkdir(DOWNLOAD_DIR)
 
-    # Initialize custom fetcher
-    fetcher = CustomFetcher(progress_hook=progress_hook)
-
     try:
+        # Initialize updater with a fetcher that does not show progress for metadata
         updater = Updater(
             metadata_dir=metadata_dir,
             metadata_base_url=f"{base_url}/metadata/",
             target_base_url=f"{base_url}/",
             target_dir=DOWNLOAD_DIR,
-            fetcher=fetcher
+            fetcher=CustomFetcher(progress_hook=None),  # No progress for metadata refresh
         )
 
+        # Refresh metadata (no progress hook here)
+        print("Refreshing metadata...")
         updater.refresh()
 
+        # Get target info
+        print(f"Checking target: {target}")
         info = updater.get_targetinfo(target)
 
         if info is None:
-            print(f"Target {target} not found")
-            return True
+            print(f"Target {target} not found in the repository.")
+            return False
 
+        # Check if the target is already cached
         path = updater.find_cached_target(info)
         if path:
-            print(f"Target is available in {path}")
-            return True
+            print(f"Target is already available in {path}. No update required.")
+            return False
 
-        path = updater.download_target(info)
-        print(f"Target downloaded and available in {path}")
+        # Target is not cached; ask user if they want to download it
+        print(f"Target {target} is missing and requires downloading.")
+        user_choice = launch_update_dialog()  # Show dialog and wait for user choice
+
+        if user_choice == True:
+            print("Proceeding with the update...")
+
+            # Initialize a progress window only after the user chooses to update
+            progress_window = ProgressWindow()
+
+            # Define a callback function for progress updates
+            def progress_callback(progress):
+                progress_window.update(progress)
+                if progress_window.complete:
+                    progress_window.close()
+
+            # Now set the fetcher with the progress hook for downloading the target
+            updater._fetcher = CustomFetcher(progress_hook=progress_callback)
+
+            # Download the target and display progress
+            path = updater.download_target(info)
+            print(f"Target downloaded and available in {path}.")
+            return True
+        else:
+            print("User chose to skip the update.")
+            return False
 
     except (OSError, RepositoryError, DownloadError) as e:
         print(f"Failed to download target {target}: {e}")
@@ -102,7 +134,7 @@ def download(base_url: str, target: str) -> bool:
             traceback.print_exc()
         return False
 
-    return True
+
 
 
 def main() -> None:

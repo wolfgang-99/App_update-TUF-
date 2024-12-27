@@ -19,8 +19,9 @@ button.pack(pady=20)
 label = tk.Label(window, text="Click the button to change the background color!", font=("Arial", 12))
 label.pack(pady=20)
 
+
 # Add a label for fun
-label = tk.Label(window, text="This to show you i have update!", font=("Arial", 14))
+label = tk.Label(window, text="This is update 2", font=("Arial", 16))
 label.pack(pady=20)
 
 # Run the application

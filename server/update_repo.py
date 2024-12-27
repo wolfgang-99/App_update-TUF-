@@ -20,7 +20,7 @@ ROLES = ["root", "targets", "snapshot", "timestamp"]
 METADATA_DIR = "metadata_repo"  # Directory where the metadata resides
 PRIVATE_KEYS_DIR = "keys"  # Directory containing private key PEM files
 PRETTY = JSONSerializer(compact=False)
-last_version = 2
+last_version = 1
 ROOT_LAST_VERSION = 1
 
 # Step 1: Load existing metadata
@@ -66,7 +66,7 @@ metadata["snapshot"].signed.meta["targets.json"].version = metadata["targets"].s
 
 # Update Timestamp
 metadata["timestamp"].signed.version += 1
-metadata["timestamp"].signed.expires = _in(1)  # Set expiration 1 day from now
+metadata["timestamp"].signed.expires = _in(7)  # Set expiration 1 day from now
 metadata["timestamp"].signed.snapshot_meta.version = metadata["snapshot"].signed.version
 
 # Step 4: Sign updated metadata
