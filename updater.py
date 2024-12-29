@@ -41,7 +41,7 @@ def replace_executable(new_exe_path):
         shutil.move(current_exe, backup_exe)
 
         # Replace the current executable with the new version
-        shutil.move(new_exe_path, current_exe)
+        shutil.copy2(new_exe_path, current_exe)
         print("Executable updated successfully.")
     except Exception as e:
         print("Failed to replace the executable.")
