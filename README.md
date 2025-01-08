@@ -11,7 +11,7 @@
 
 # <b>NB:</B>  
 * This use mongodb gridfs as database. you can choose to use any database of your choice.
-* If you want to run the tuf updated flow on program file folder with elevated right use the privileged branch.
+* If you want to run the tuf update flow on program file folder with elevated right see privileged branch.
 
 
 # News
