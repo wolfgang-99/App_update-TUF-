@@ -8,10 +8,11 @@ from pathlib import Path
 from urllib import request
 
 # private
-from network_download import CustomFetcher
-from progress_hook import ProgressWindow
 from new_update import launch_update_dialog
+from network_download import CustomFetcher
 
+
+# tuf
 from tuf.api.exceptions import DownloadError, RepositoryError
 from tuf.ngclient import Updater
 
@@ -46,7 +47,10 @@ def init_tofu(base_url: str) -> bool:
     return True
 
 
-def download(base_url: str, target: str) -> bool:
+
+
+
+def download(base_url: str, target: str) -> bool | str:
     """
     Download the target file using ``ngclient`` Updater.
 
@@ -74,7 +78,6 @@ def download(base_url: str, target: str) -> bool:
         os.mkdir(DOWNLOAD_DIR)
 
     try:
-        # Initialize updater with a fetcher that does not show progress for metadata
         updater = Updater(
             metadata_dir=metadata_dir,
             metadata_base_url=f"{base_url}/metadata/",
@@ -83,11 +86,9 @@ def download(base_url: str, target: str) -> bool:
             fetcher=CustomFetcher(progress_hook=None),  # No progress for metadata refresh
         )
 
-        # Refresh metadata (no progress hook here)
         print("Refreshing metadata...")
         updater.refresh()
 
-        # Get target info
         print(f"Checking target: {target}")
         info = updater.get_targetinfo(target)
 
@@ -95,34 +96,16 @@ def download(base_url: str, target: str) -> bool:
             print(f"Target {target} not found in the repository.")
             return False
 
-        # Check if the target is already cached
         path = updater.find_cached_target(info)
         if path:
             print(f"Target is already available in {path}. No update required.")
-            return False
+            return "up_to_date"
 
-        # Target is not cached; ask user if they want to download it
         print(f"Target {target} is missing and requires downloading.")
-        user_choice = launch_update_dialog()  # Show dialog and wait for user choice
+        user_choice = launch_update_dialog()
 
-        if user_choice == True:
-            print("Proceeding with the update...")
+        if user_choice:
 
-            # Initialize a progress window only after the user chooses to update
-            progress_window = ProgressWindow()
-
-            # Define a callback function for progress updates
-            def progress_callback(progress):
-                progress_window.update(progress)
-                if progress_window.complete:
-                    progress_window.close()
-
-            # Now set the fetcher with the progress hook for downloading the target
-            updater._fetcher = CustomFetcher(progress_hook=progress_callback)
-
-            # Download the target and display progress
-            path = updater.download_target(info)
-            print(f"Target downloaded and available in {path}.")
             return True
         else:
             print("User chose to skip the update.")
