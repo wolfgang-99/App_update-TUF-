@@ -7,9 +7,11 @@
 * Remember to change your DB_NAME to which every name you want or leave the default. 
 * Having an .env file with the proper variable is important for the files to run.
 * This has a custom-made progress hook made with tkinter. you can change to which ever progress hook that suits you
+* A copy of the target would need in the download folder for it not to be to update everytime the app is lunched. 
 
 # <b>NB:</B>  
 * This use mongodb gridfs as database. you can choose to use any database of your choice.
+* If you want to run the tuf updated flow on program file folder with elevated right use the privileged branch.
 
 
 # News
